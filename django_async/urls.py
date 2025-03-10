@@ -17,9 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from api.views import TestView
-from api.utils import select_email_template_by_order
 
-select_email_template_by_order('test')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('test/', TestView.as_view())

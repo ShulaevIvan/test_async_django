@@ -14,6 +14,7 @@ from docxtpl import DocxTemplate
 from django.conf import settings
 
 from .models import TestModel
+from .utils import select_email_template_by_order
 
 # Create your views here.
 
@@ -57,18 +58,26 @@ async def sendEmail(email_data, email_type='order', to_email=None):
     feedback_email = email_data.get('client_email')
     order_email = settings.EMAIL_HOST_USER
     send_feedback_to_client = True
+    email_template = await select_email_template_by_order('specification_req')
+
 
     if not re.match(email_pattern, order_email) and not re.match(email_pattern, feedback_email):
         return False
     elif not re.match(email_pattern, feedback_email) or not feedback_email:
         send_feedback_to_client = False
-
+    elif len(email_template) < 1:
+        return False
     try:
         msg_mail = EmailMessage(
-            f"test", 
+            f"{email_template.get('email_subject')}", 
             f"""
-                test
-            """,
+               <h3>Номер заказа: №{email_template.get('order_number')}</h3>
+               <h4>Время запроса: {email_template.get('order_date')}</h4>
+               <h4>Описание:</h4>
+               <p>{email_template.get('email_body_description')}</p>
+                <h3>Данные:</h3>
+                <ul>
+            """ + ''.join(f"<li>{field.get('value')}:</li>"for field in email_template.get('fields')) + '</ul>',
             f'{settings.EMAIL_HOST_USER}', [f"{settings.EMAIL_ORDER_ADDRESS}"]
         )
         msg_mail.content_subtype = "html"
